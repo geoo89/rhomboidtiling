@@ -1,0 +1,7 @@
+CMakeCache.txt
+cmake_install.cmake
+CMakeFiles/*
+Makefile
+main
+tests_2d
+tests_3d
