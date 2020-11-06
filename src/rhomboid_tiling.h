@@ -118,6 +118,14 @@ class RhomboidTiling {
      */
     std::vector<CellWithRadius<FT>> get_slab_filtration(int order);
 
+    // Get the rhomboid bifiltration with parameters r (radius) and
+    // k (depth of the anchor vertex of the rhomboid) up to highest_order
+    // (for cells of all dimensions). Each cell is a BifiltrationCell<FT>.
+    // It is assigned an ID and has radius, depth,
+    // dimension and the ids of its boundary cells associated to it.
+    std::vector<BifiltrationCell<FT>> get_rhomboid_bifiltration();
+    // The rhomboid bifiltration between minorder and maxorder (inclusive).
+    std::vector<BifiltrationCell<FT>> get_rhomboid_bifiltration(int minorder, int maxorder);
     // Get the bifiltration with parameters r (radius) and k (depth)
     // up to highest_order (cells of all dimensions). Each cell is a
     // BifiltrationCell<FT>. It is assigned an ID and has radius, depth,

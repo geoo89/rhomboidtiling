@@ -671,6 +671,56 @@ RhomboidTiling<Dt>::get_bifiltration(int minorder, int maxorder) {
 }
 
 
+
+
+template<class Dt>
+std::vector<BifiltrationCell<typename Dt::FT>>
+RhomboidTiling<Dt>::get_rhomboid_bifiltration() {
+  return get_rhomboid_bifiltration(0, highest_order);
+}
+
+
+// TODO: refactor common functionality with get_bifiltration?
+template<class Dt>
+std::vector<BifiltrationCell<typename Dt::FT>>
+RhomboidTiling<Dt>::get_rhomboid_bifiltration(int minorder, int maxorder) {
+  if (minorder < 0) minorder = 0;
+  if (maxorder > highest_order) maxorder = highest_order;
+  if (minorder > maxorder) return std::vector<BifiltrationCell<FT>>();
+
+  std::vector<BifiltrationCell<FT>> bifiltration;
+  // Iterate over depth (of the anchor vertex of the rhomboid) k.
+  for (int k = minorder; k <= maxorder; ++k) {
+    // Interate over dimension d.
+    for (int d = 0; d < rhomboids[k].size(); ++d) {
+      // Collect all rhomboids of depth k and dimension d.
+      for (const std::pair<Rhomboid,RhomboidInfo<FT>>& rr : rhomboids[k][d]) {
+        const Rhomboid& rho = rr.first;
+        const RhomboidInfo<FT>& rho_info = rr.second;
+        BifiltrationCell<FT> c;
+        c.id = rho_info.id;
+        c.r = rho_info.r;
+        c.d = d;
+        c.k = k;
+
+        // compute ids of lower boundary cells
+        std::vector<int> bdu_ids;
+        for (const auto& ru : rho.upper_boundary()) {
+          c.boundary.push_back(rhomboids[k][d-1][ru].id);
+        }
+        // compute ids of upper boundary cells
+        std::vector<int> bdl_ids;
+        for (const auto& rl : rho.lower_boundary()) {
+          c.boundary.push_back(rhomboids[k+1][d-1][rl].id);
+        }
+        bifiltration.push_back(c);
+      } // end for each rhomboid
+    } // end for each d
+  } // end for each k
+  return bifiltration;
+}
+
+
 template<class Dt>
 std::vector<CCell>
 RhomboidTiling<Dt>::get_bifiltration_id_map() {

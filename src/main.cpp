@@ -75,6 +75,7 @@ void print_usage() {
     std::cout << "  fslices: slice filtrations." << std::endl;
     std::cout << "  fslabs: slice and slab filtrations." << std::endl;
     std::cout << "  bslices: boundary matrix for each slice filtration." << std::endl;
+    std::cout << "  brhomboids: boundary matrix of (unsliced) rhomboid bifiltration." << std::endl;
 }
 
 
@@ -178,6 +179,12 @@ void process_request(std::ifstream& pfile, std::ofstream& ofile, int max_order, 
             for (const auto& c : bf) {
                 ofile << c << std::endl;
             }
+        }
+    } else if (otype == "rbifi") {
+        auto bf = rt.get_rhomboid_bifiltration();
+        std::sort(bf.begin(), bf.end());
+        for (const auto& c : bf) {
+            ofile << c << std::endl;
         }
     } else { // "bifi" is the default
         auto bf = rt.get_bifiltration();

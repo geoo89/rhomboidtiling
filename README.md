@@ -70,7 +70,8 @@ Access methods for these filtration are:
 
 - Filtration of the rhomboid tiling: `get_rhomboid_filtration`
 - Filtration of the order-k Delaunay mosaic: `get_slice_filtration` and `get_delaunay_filtration`
-- 2-parameter filtration: `get_bifiltration`
+- 2-parameter filtration of sliced rhomboids: `get_bifiltration`
+- 2-parameter filtration of unsliced rhomboids: `get_rhomboid_bifiltration`
 
 See the documentation in `src/rhomboid_tiling.h` for details.
 
@@ -92,6 +93,7 @@ Options for the output data are:
 
 - bifi: [default] Boundary matrix of the 2-parameter discrete bifiltration.
 - cbifi: A combinatorial representation of bifi (a cell is represented by its vertices rather than its ID).
+- rbifi: boundary matrix of (unsliced) rhomboid bifiltration.
 - rhomboids: The rhomboids of the rhomboid tiling (top dimensional cells only).
 - slices: All order-k Delaunay slices (top dimensional cells only).
 - halfint: All degree-k Delaunay half-integer slices (top dimensional cells only).
