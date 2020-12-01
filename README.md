@@ -91,9 +91,9 @@ each with d coordinates separated by spaces, where d is the provided dimension
 parameter (currently only 2 and 3 dimensional data is supported).
 Options for the output data are:
 
-- bifi: [default] Boundary matrix of the 2-parameter discrete bifiltration.
+- bifi: [default] Boundary matrix of the 2-parameter discrete sliced rhomboid bifiltration.
 - cbifi: A combinatorial representation of bifi (a cell is represented by its vertices rather than its ID).
-- rbifi: boundary matrix of (unsliced) rhomboid bifiltration.
+- ubifi: boundary matrix of (unsliced) rhomboid bifiltration.
 - rhomboids: The rhomboids of the rhomboid tiling (top dimensional cells only).
 - slices: All order-k Delaunay slices (top dimensional cells only).
 - halfint: All degree-k Delaunay half-integer slices (top dimensional cells only).
@@ -102,8 +102,14 @@ Options for the output data are:
 - fslices: Filtrations on the order-k Delaunay slices for each k.
 - fslabs: Filtrations on the order-k Delaunay slices for each k and intermediate Delaunay slabs.
 - bslices: Boundary matrices for order-k Delaunay slice filtration for each k.
+- firep: free implicit representation of bifi.
+- ufirep: free implicit representation of ubifi.
 
-The output format depends on the output data. The output meaning and data type
+The output format depends on the output data. For bifi and ubifi, each cell is
+assigned an ID, and in the output file, each cell is line of space separated
+values, consisting of its ID, its dimension, its order *k*, its radius value
+*r*, and the IDs of its boundary cells.
+For the other output formats, the output meaning and data type
 are documented in `src/rhomboid_tiling.h`. The formatting of each output data
 type is defined in the respective class definition, with the exception of
 CCell, which is a `std::vector` of `std::vector` of `int`s and is output in 

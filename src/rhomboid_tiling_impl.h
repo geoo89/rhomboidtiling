@@ -672,55 +672,6 @@ RhomboidTiling<Dt>::get_bifiltration(int minorder, int maxorder) {
 
 
 
-
-template<class Dt>
-std::vector<BifiltrationCell<typename Dt::FT>>
-RhomboidTiling<Dt>::get_rhomboid_bifiltration() {
-  return get_rhomboid_bifiltration(0, highest_order);
-}
-
-
-// TODO: refactor common functionality with get_bifiltration?
-template<class Dt>
-std::vector<BifiltrationCell<typename Dt::FT>>
-RhomboidTiling<Dt>::get_rhomboid_bifiltration(int minorder, int maxorder) {
-  if (minorder < 0) minorder = 0;
-  if (maxorder > highest_order) maxorder = highest_order;
-  if (minorder > maxorder) return std::vector<BifiltrationCell<FT>>();
-
-  std::vector<BifiltrationCell<FT>> bifiltration;
-  // Iterate over depth (of the anchor vertex of the rhomboid) k.
-  for (int k = minorder; k <= maxorder; ++k) {
-    // Interate over dimension d.
-    for (int d = 0; d < rhomboids[k].size(); ++d) {
-      // Collect all rhomboids of depth k and dimension d.
-      for (const std::pair<Rhomboid,RhomboidInfo<FT>>& rr : rhomboids[k][d]) {
-        const Rhomboid& rho = rr.first;
-        const RhomboidInfo<FT>& rho_info = rr.second;
-        BifiltrationCell<FT> c;
-        c.id = rho_info.id;
-        c.r = rho_info.r;
-        c.d = d;
-        c.k = k;
-
-        // compute ids of lower boundary cells
-        std::vector<int> bdu_ids;
-        for (const auto& ru : rho.upper_boundary()) {
-          c.boundary.push_back(rhomboids[k][d-1][ru].id);
-        }
-        // compute ids of upper boundary cells
-        std::vector<int> bdl_ids;
-        for (const auto& rl : rho.lower_boundary()) {
-          c.boundary.push_back(rhomboids[k+1][d-1][rl].id);
-        }
-        bifiltration.push_back(c);
-      } // end for each rhomboid
-    } // end for each d
-  } // end for each k
-  return bifiltration;
-}
-
-
 template<class Dt>
 std::vector<CCell>
 RhomboidTiling<Dt>::get_bifiltration_id_map() {
@@ -755,3 +706,120 @@ RhomboidTiling<Dt>::get_bifiltration_id_map() {
   }
   return cells;
 }
+
+
+template<class Dt>
+std::vector<BifiltrationCell<typename Dt::FT>>
+RhomboidTiling<Dt>::get_unsliced_bifiltration() {
+  return get_unsliced_bifiltration(highest_order);
+}
+
+
+// TODO: refactor common functionality with get_bifiltration?
+template<class Dt>
+std::vector<BifiltrationCell<typename Dt::FT>>
+RhomboidTiling<Dt>::get_unsliced_bifiltration(int maxorder) {
+  if (maxorder > highest_order) maxorder = highest_order;
+  if (maxorder < 0) return std::vector<BifiltrationCell<FT>>();
+
+  std::vector<BifiltrationCell<FT>> bifiltration;
+  // Iterate over depth (of the anchor vertex of the rhomboid) k.
+  for (int k = 0; k <= maxorder; ++k) {
+    // Iterate over dimension d.
+    for (int d = 0; d < rhomboids[k].size(); ++d) {
+      // For rhomboids anchored at depth maxorder, their slice at maxorder
+      // can only be a vertex. But those vertices are already represented by
+      // 0-dimensional rhomboids.
+      if ((k == maxorder) && (d != 0)) break;
+      // Collect all rhomboids of depth k and dimension d.
+      for (const std::pair<Rhomboid,RhomboidInfo<FT>>& rr : rhomboids[k][d]) {
+        const Rhomboid& rho = rr.first;
+        const RhomboidInfo<FT>& rho_info = rr.second;
+        BifiltrationCell<FT> c;
+        c.id = rho_info.id;
+        c.r = rho_info.r;
+        c.d = d;
+        c.k = k;
+
+        // compute ids of upper boundary cells
+        std::vector<int> bdu_ids;
+        for (const auto& ru : rho.upper_boundary()) {
+          bdu_ids.push_back(rhomboids[k][d-1][ru].id);
+          c.boundary.push_back(rhomboids[k][d-1][ru].id);
+        }
+
+        std::vector<int> bdl_ids;
+        if ((k + 1 < maxorder) || (d == 1)) {
+          // Lower boundary cells are of depth k+1.
+          // So if k + 1 == maxorder, we discard them,
+          // unless their are vertices (d == 1).
+          // Compute ids of lower boundary cells.
+          for (const auto& rl : rho.lower_boundary()) {
+            bdl_ids.push_back(rhomboids[k+1][d-1][rl].id);
+            c.boundary.push_back(rhomboids[k+1][d-1][rl].id);
+          }
+        }
+
+        if (k + d > maxorder) {
+          // This rhomboid got sliced at maxorder.
+          // Note that this can only happen for rhomboids of d >= 2.
+          // We add its lower boundary, encoded with the following ID:
+          c.boundary.push_back(rho_info.id + cur_id);
+          // This is a new cell, so we also need to compute its stats...
+          BifiltrationCell<FT> c2;
+          c2.id = rho_info.id + cur_id;
+          c2.r = rho_info.r;
+          c2.d = d-1;
+          c2.k = maxorder;
+          // ...and its boundary.
+          int g = 2*(maxorder - k);
+          // Illustration below for a 3 dimensional rhomboid with 2 dimensional faces.
+          //---------------------------------------------
+          //   rho   g  |  upper  g  |  lower  g | depth
+          //    o       |    o       |           |  k
+          //   / \   1  |   / \   1  |           |  k
+          //  o   o  2  |  o   o  2  |      o    |  k+1
+          //  |\ /|  3  |   \ /   3  |     /|  1 |  k+1
+          //  o o o  4  |    o       |    o o  2 |  k+2
+          //   \|/   5  |            |    |/   3 |  k+2
+          //    o       |            |    o      |  k+3
+          //---------------------------------------------
+          if (g < 2*d-2) {
+            // Slices of the upper boundary rhomboids.
+            // The interiors of upper boundary rhomboids are only intersected
+            // by the slicing planes up to 2d-3.
+            for (int bi : bdu_ids) {
+              c2.boundary.push_back(cur_id + bi);
+            }            
+          }
+          if (g > 2) {
+            // Slices of the lower boundary rhomboids.
+            // The interiors of lower boundary rhomboids are only intersected
+            // by the slicing planes from 3 onwards.
+            for (int bi : bdl_ids) {
+              c2.boundary.push_back(cur_id + bi);
+            }
+          }
+          if (d == 2) {
+            // For slices of 2-dimensional rhomboids (i.e. edges), the boundary are
+            // slices of 1-dimensional rhomboids (i.e. vertices). These vertices
+            // haven't been added yet, because they are not in the interior of those
+            // 1-dimensional rhomboids. Instead, we need to find out the actual vertex ids.
+            // We get these vertices as the first slice of rho.
+            for (const CVertex& vx : rho.get_slice(1)) {
+              Rhomboid rho0;
+              rho0.xin = vx;
+              // Get id of the vertex and add it to the cell's boundary.
+              c2.boundary.push_back(rhomboids[maxorder][0][rho0].id);
+            }
+          }
+          bifiltration.push_back(c2);
+        }
+
+        bifiltration.push_back(c);
+      } // end for each rhomboid
+    } // end for each d
+  } // end for each k
+  return bifiltration;
+}
+

@@ -123,9 +123,13 @@ class RhomboidTiling {
     // (for cells of all dimensions). Each cell is a BifiltrationCell<FT>.
     // It is assigned an ID and has radius, depth,
     // dimension and the ids of its boundary cells associated to it.
-    std::vector<BifiltrationCell<FT>> get_rhomboid_bifiltration();
-    // The rhomboid bifiltration between minorder and maxorder (inclusive).
-    std::vector<BifiltrationCell<FT>> get_rhomboid_bifiltration(int minorder, int maxorder);
+    std::vector<BifiltrationCell<FT>> get_unsliced_bifiltration();
+    // The rhomboid bifiltration between depths 0 and maxorder (inclusive).
+    // Rhomboids are sliced through at maxorder, with the slice at maxorder
+    // contained in the bifiltration, the sliced rhomboid parts at smaller
+    // depths part of the bifiltration and the sliced rhomboid parts at
+    // greater depths missing from the bifiltration.
+    std::vector<BifiltrationCell<FT>> get_unsliced_bifiltration(int maxorder);
     // Get the bifiltration with parameters r (radius) and k (depth)
     // up to highest_order (cells of all dimensions). Each cell is a
     // BifiltrationCell<FT>. It is assigned an ID and has radius, depth,

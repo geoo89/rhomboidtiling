@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Georg Osang
+ * Copyright (c) 2019-2020 Georg Osang
  * Distributed under the MIT License, see LICENCE.md
  */
 
@@ -15,6 +15,7 @@
 #include "rhomboid_with_radius.h"
 #include "bifiltration_cell.h"
 #include "combinatorial_bifiltration_cell.h"
+#include "firep.h"
 
 #include <iostream>
 #include <fstream>
@@ -65,8 +66,9 @@ void print_usage() {
     std::cout << "dimension: Dimension of the input point set (2 or 3)." << std::endl;
     std::cout << "order: Order k up to which to compute requested structure." << std::endl;
     std::cout << "type: One of the following:" << std::endl;
-    std::cout << "  bifi: [default] boundary matrix of bifiltration." << std::endl;
+    std::cout << "  bifi: [default] boundary matrix of (sliced) rhomboid bifiltration." << std::endl;
     std::cout << "  cbifi: combinatorial representation of bifi." << std::endl;
+    std::cout << "  ubifi: boundary matrix of unsliced rhomboid bifiltration." << std::endl;
     std::cout << "  rhomboids: rhomboid tiling (top dimensional cells)." << std::endl;
     std::cout << "  slices: all delaunay slices (top dimensional cells)." << std::endl;
     std::cout << "  halfint: all delaunay half-integer slices (top dimensional cells)." << std::endl;
@@ -75,12 +77,13 @@ void print_usage() {
     std::cout << "  fslices: slice filtrations." << std::endl;
     std::cout << "  fslabs: slice and slab filtrations." << std::endl;
     std::cout << "  bslices: boundary matrix for each slice filtration." << std::endl;
-    std::cout << "  brhomboids: boundary matrix of (unsliced) rhomboid bifiltration." << std::endl;
+    std::cout << "  firep: free implicit representation of bifi." << std::endl;
+    std::cout << "  ufirep: free implicit representation of ubifi." << std::endl;
 }
 
 
 template<class Dt>
-void process_request(std::ifstream& pfile, std::ofstream& ofile, int max_order, std::string otype) {
+void process_request(std::ifstream& pfile, std::ofstream& ofile, int max_order, std::string otype, int repr_dimension) {
 
     auto points = read_points<Dt>(pfile);
     pfile.close();
@@ -180,18 +183,26 @@ void process_request(std::ifstream& pfile, std::ofstream& ofile, int max_order, 
                 ofile << c << std::endl;
             }
         }
-    } else if (otype == "rbifi") {
-        auto bf = rt.get_rhomboid_bifiltration();
+    } else if (otype == "ubifi") {
+        auto bf = rt.get_unsliced_bifiltration();
         std::sort(bf.begin(), bf.end());
         for (const auto& c : bf) {
             ofile << c << std::endl;
         }
-    } else { // "bifi" is the default
+    } else if (otype == "ufirep") {
+        auto bf = rt.get_unsliced_bifiltration();
+        bifiltration_to_firep<FT>(bf, repr_dimension, ofile);
+    } else if (otype == "firep") {
+        auto bf = rt.get_bifiltration();
+        bifiltration_to_firep<FT>(bf, repr_dimension, ofile);
+    } else if (otype == "bifi") { // "bifi" is the default
         auto bf = rt.get_bifiltration();
         std::sort(bf.begin(), bf.end());
         for (const auto& c : bf) {
             ofile << c << std::endl;
         }
+    } else {
+        std::cout << "Invalid output type specified, aborting." << std::endl;
     }
 }
 
@@ -210,6 +221,11 @@ int main(int argc, char** argv)
     std::string otype = "bifi";
     if (argc > 5) {
         otype = std::string(argv[5]);
+    }
+    // for firep only
+    int repr_dimension = 1;
+    if (argc > 6) {
+        repr_dimension = atoi(argv[6]);
     }
 
     std::ifstream pfile(infile.c_str());
@@ -230,9 +246,9 @@ int main(int argc, char** argv)
     }
 
     if (dimension == 2) {
-        process_request<Dt2>(pfile, ofile, max_order, otype);
+        process_request<Dt2>(pfile, ofile, max_order, otype, repr_dimension);
     } else if (dimension == 3) {
-        process_request<Dt3>(pfile, ofile, max_order, otype);
+        process_request<Dt3>(pfile, ofile, max_order, otype, repr_dimension);
     } else {
         std::cout << "invalid dimension" << std::endl;
         exit(0);        
